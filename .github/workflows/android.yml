@@ -1,0 +1,30 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0 ndk;27.2.12479018'
+      - name: Install cargo-apk
+        run: cargo install cargo-apk --locked
+      - name: Build release APK
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.2.12479018
+        run: cargo apk build --release --target aarch64-linux-android
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: paperland-android-apk
+          path: target/release/apk/*.apk
+          if-no-files-found: error
