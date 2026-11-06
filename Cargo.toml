@@ -1,0 +1,16 @@
+[package]
+name = "paperland"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+macroquad = "0.4.14"
+
+[package.metadata.android]
+package = "com.iorihinata.paperland"
+label = "Paperland"
+assets = "assets"
+
+[package.metadata.android.sdk]
+min_sdk_version = 23
+target_sdk_version = 35
