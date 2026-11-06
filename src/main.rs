@@ -42,11 +42,11 @@ fn kind(x: i32, y: i32) -> Kind {
 }
 fn glyph(k: Kind, x: i32, y: i32) -> &'static str {
     match k {
-        Kind::Water => if hash(x,y,2)%3==0 {"~"} else {"≈"},
-        Kind::Forest => match hash(x,y,3)%4 {0=>"♣",1=>"♠",2=>"#",_=>"♣"},
+        Kind::Water => if hash(x,y,2)%3==0 {"~"} else {"~"},
+        Kind::Forest => match hash(x,y,3)%4 {0=>"#",1=>"*",2=>"#",_=>"#"},
         Kind::Rock => if hash(x,y,4)%2==0 {"o"} else {"O"},
         Kind::Cabin => "+",
-        Kind::Ruin => "⌂",
+        Kind::Ruin => "+",
         Kind::Camp => "*",
         Kind::Path => ".",
         Kind::Field => if hash(x,y,5)%2==0 {"v"} else {"'"},
