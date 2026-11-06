@@ -117,7 +117,7 @@ async fn main() {
     let mut g=Game::new();
     loop {
         let dt=get_frame_time().min(0.05);
-        let mut dx=0.0; let mut dy=0.0;
+        let mut dx: f32 = 0.0; let mut dy: f32 = 0.0;
         if is_key_down(KeyCode::A)||is_key_down(KeyCode::Left){dx-=1.0;}
         if is_key_down(KeyCode::D)||is_key_down(KeyCode::Right){dx+=1.0;}
         if is_key_down(KeyCode::W)||is_key_down(KeyCode::Up){dy-=1.0;}
