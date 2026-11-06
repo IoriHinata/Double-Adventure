@@ -29,3 +29,6 @@ Pushing to `main` triggers the GitHub Actions workflow in `.github/workflows/and
 ## Art direction
 
 Warm recycled kraft paper, ink-like monospace glyphs, subtle paper grain, no conventional sprite art. All visible world objects are represented by printable characters.
+
+
+Latest Android build fix: explicitly typed movement input as `f32` to resolve Rust E0689.
