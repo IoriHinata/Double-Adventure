@@ -10,10 +10,10 @@ permissions:
 
 jobs:
   android:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install pinned Rust toolchain
         uses: dtolnay/rust-toolchain@master
@@ -22,7 +22,7 @@ jobs:
           targets: aarch64-linux-android
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -33,7 +33,7 @@ jobs:
           packages: 'platform-tools platforms;android-35 build-tools;35.0.0 ndk;28.2.13676358'
 
       - name: Install cargo-quad-apk
-        run: cargo +1.95.0 install --git https://github.com/hoklims/cargo-quad-apk --package cargo-quad-apk --locked
+        run: cargo +1.95.0 install --git https://github.com/hoklims/cargo-quad-apk cargo-quad-apk --locked
 
       - name: Build Macroquad Android APK
         env:
