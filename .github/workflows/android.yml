@@ -1,30 +1,56 @@
-name: Build Android APK
+name: Build PAPERLAND Android APK
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   android:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pinned Rust toolchain
+        uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: 1.95.0
           targets: aarch64-linux-android
-      - uses: android-actions/setup-android@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
         with:
-          packages: 'platform-tools platforms;android-35 build-tools;35.0.0 ndk;27.2.12479018'
-      - name: Install cargo-apk
-        run: cargo install cargo-apk --locked
-      - name: Build release APK
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK and NDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0 ndk;28.2.13676358'
+
+      - name: Install cargo-quad-apk
+        run: cargo +1.95.0 install --git https://github.com/hoklims/cargo-quad-apk
+
+      - name: Build Macroquad Android APK
         env:
-          ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/27.2.12479018
-        run: cargo apk build --release --target aarch64-linux-android
-      - name: Upload APK
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
+        run: cargo quad-apk build --release --example paperland
+
+      - name: Verify APK package
+        run: |
+          APK="$(find target/android-artifacts/release/apk -maxdepth 1 -name '*.apk' -print -quit)"
+          test -n "$APK"
+          echo "APK_PATH=$APK" >> "$GITHUB_ENV"
+          ls -lh "$APK"
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: paperland-android-apk
-          path: target/release/apk/*.apk
+          path: ${{ env.APK_PATH }}
           if-no-files-found: error
