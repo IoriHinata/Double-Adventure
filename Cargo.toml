@@ -3,17 +3,19 @@ name = "paperland"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-crate-type = ["cdylib"]
-
 [dependencies]
 macroquad = "0.4.14"
+
+[[example]]
+name = "paperland"
+path = "examples/paperland.rs"
+crate-type = ["cdylib"]
 
 [package.metadata.android]
 package = "com.iorihinata.paperland"
 label = "Paperland"
-assets = "assets"
-
-[package.metadata.android.sdk]
+assets = "assets/"
+build_targets = ["aarch64-linux-android"]
+android_version = 35
 min_sdk_version = 23
 target_sdk_version = 35
