@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Install pinned Rust toolchain
+      - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: 1.95.0
@@ -28,26 +28,38 @@ jobs:
           java-version: '17'
 
       - name: Set up Android SDK and NDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools platforms;android-35 build-tools;35.0.0 ndk;28.2.13676358'
 
       - name: Install cargo-quad-apk
-        run: cargo +1.95.0 install --git https://github.com/hoklims/cargo-quad-apk cargo-quad-apk --locked
+        run: cargo +1.95.0 install --git https://github.com/hoklims/cargo-quad-apk --locked
 
-      - name: Build Macroquad Android APK
+      - name: Build Android application
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
           ANDROID_SDK_HOME: ${{ env.ANDROID_HOME }}
           NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
-        run: cargo quad-apk build --release --example paperland
+        run: cargo quad-apk build --release
 
-      - name: Verify APK package
+      - name: Locate and verify APK
+        shell: bash
         run: |
-          APK="$(find target/android-artifacts/release/apk -maxdepth 1 -name '*.apk' -print -quit)"
-          test -n "$APK"
+          set -euo pipefail
+          echo "Searching generated APKs..."
+          find target -type f -name '*.apk' -print
+          APK="$(find target -type f -name '*.apk' -print -quit)"
+          if [[ -z "$APK" ]]; then
+            echo "::error::cargo-quad-apk finished without producing an APK"
+            echo "Build output directories:"
+            find target -maxdepth 5 -type d -print | sort | tail -100
+            exit 1
+          fi
           echo "APK_PATH=$APK" >> "$GITHUB_ENV"
           ls -lh "$APK"
+          if command -v apkanalyzer >/dev/null 2>&1; then
+            apkanalyzer manifest application-id "$APK"
+          fi
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
