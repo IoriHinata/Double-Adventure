@@ -10,60 +10,76 @@ permissions:
 
 jobs:
   android:
+    name: Build arm64 Android APK
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      ANDROID_HOME: ${{ env.ANDROID_HOME }}
+      ANDROID_SDK_ROOT: ${{ env.ANDROID_HOME }}
+      ANDROID_SDK_HOME: ${{ env.ANDROID_HOME }}
+      NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Install Rust toolchain
+      - name: Install Rust 1.95 and Android target
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: 1.95.0
           targets: aarch64-linux-android
 
-      - name: Set up Java
+      - name: Set up Java 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK and NDK
+      - name: Install Android SDK and NDK
         uses: android-actions/setup-android@v4
         with:
           packages: 'platform-tools platforms;android-35 build-tools;35.0.0 ndk;28.2.13676358'
 
+      - name: Install ZIP utility
+        run: sudo apt-get update && sudo apt-get install -y zip
+
       - name: Install cargo-quad-apk
-        run: cargo +1.95.0 install --git https://github.com/hoklims/cargo-quad-apk --locked
+        run: cargo +1.95.0 install --git https://github.com/hoklims/cargo-quad-apk cargo-quad-apk --locked --force
 
-      - name: Build Android application
-        env:
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
-          ANDROID_SDK_HOME: ${{ env.ANDROID_HOME }}
-          NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/28.2.13676358
-        run: cargo quad-apk build --release
-
-      - name: Locate and verify APK
+      - name: Verify Android toolchain
         shell: bash
         run: |
           set -euo pipefail
-          echo "Searching generated APKs..."
-          find target -type f -name '*.apk' -print
-          APK="$(find target -type f -name '*.apk' -print -quit)"
+          rustc +1.95.0 --version
+          cargo quad-apk --help
+          test -d "$ANDROID_HOME/platforms/android-35"
+          test -d "$NDK_HOME"
+          test -x "$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
+
+      - name: Build APK
+        run: cargo quad-apk build --release --target aarch64-linux-android
+
+      - name: Verify APK
+        id: apk
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="$(find target/android-artifacts/release/apk -maxdepth 1 -type f -name '*.apk' -print -quit)"
           if [[ -z "$APK" ]]; then
-            echo "::error::cargo-quad-apk finished without producing an APK"
-            echo "Build output directories:"
-            find target -maxdepth 5 -type d -print | sort | tail -100
+            echo "::error::No APK was generated"
+            find target -maxdepth 6 -type f -print | sort
             exit 1
           fi
-          echo "APK_PATH=$APK" >> "$GITHUB_ENV"
+          APKSIGNER="$ANDROID_HOME/build-tools/35.0.0/apksigner"
+          AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
+          "$APKSIGNER" verify --verbose "$APK"
+          "$AAPT" dump badging "$APK" | grep -E "^(package:|application-label:|sdkVersion:|targetSdkVersion:)"
+          echo "apk_path=$APK" >> "$GITHUB_OUTPUT"
           ls -lh "$APK"
-          if command -v apkanalyzer >/dev/null 2>&1; then
-            apkanalyzer manifest application-id "$APK"
-          fi
 
-      - name: Upload APK artifact
+      - name: Upload installable APK
         uses: actions/upload-artifact@v4
         with:
-          name: paperland-android-apk
-          path: ${{ env.APK_PATH }}
+          name: paperland-android-arm64-apk
+          path: ${{ steps.apk.outputs.apk_path }}
           if-no-files-found: error
+          retention-days: 14
