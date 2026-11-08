@@ -12,7 +12,7 @@ path = "examples/paperland.rs"
 crate-type = ["cdylib"]
 
 [package.metadata.android]
-package = "com.iorihinata.paperland"
+package_name = "com.iorihinata.paperland"
 label = "Paperland"
 assets = "assets/"
 build_targets = ["aarch64-linux-android"]
