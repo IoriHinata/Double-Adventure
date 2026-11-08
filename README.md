@@ -1,34 +1,46 @@
 # PAPERLAND
 
-A top-down open-world exploration game built with Rust + Macroquad.
-
-The world is drawn entirely from typewriter-style text glyphs on recycled-paper colors. Terrain and props are procedural, the map streams as the player explores, and Android touch controls are built in.
-
-## Build locally
-
-```bash
-rustup target add aarch64-linux-android
-cargo install cargo-apk
-cargo apk build --release --target aarch64-linux-android
-```
+PAPERLAND is a small top-down exploration game made with Rust and Macroquad. The world is drawn with typewriter-like glyphs on a warm recycled-paper background. Terrain is generated procedurally and streamed around the player.
 
 ## Android build
 
-Pushing to `main` triggers the GitHub Actions workflow in `.github/workflows/android.yml`. The APK is uploaded as the `paperland-android-apk` artifact.
+The repository is configured for a reproducible Android ARM64 APK build using Rust 1.95, Android SDK 35, NDK 28.2 and `cargo-quad-apk`.
+
+### GitHub Actions
+
+Every push to `main` starts **Build PAPERLAND Android APK**. When it succeeds, open the run's **Artifacts** section and download `paperland-android-arm64-apk`.
+
+### Local build requirements
+
+- Rust 1.95.0 (selected by `rust-toolchain.toml`)
+- Android SDK platform 35 and build-tools 35.0.0
+- Android NDK 28.2.13676358
+- JDK 17
+- `zip`
+
+Set the SDK paths, then run:
+
+```sh
+rustup target add aarch64-linux-android
+cargo +1.95.0 install --git https://github.com/hoklims/cargo-quad-apk cargo-quad-apk --locked
+cargo quad-apk build --release --target aarch64-linux-android
+```
+
+The APK is generated in `target/android-artifacts/release/apk/`.
 
 ## Controls
 
-- WASD / arrows: move
-- Shift: run
+- WASD / arrow keys: move
+- Left Shift: run
 - E: interact
-- I: inventory
+- I: backpack
 - M: map
 - Q: journal
 - Android: on-screen directional pad and action buttons
 
-## Art direction
+## Project layout
 
-Warm recycled kraft paper, ink-like monospace glyphs, subtle paper grain, no conventional sprite art. All visible world objects are represented by printable characters.
-
-
-Latest Android build fix: explicitly typed movement input as `f32` to resolve Rust E0689.
+- `src/main.rs` — game entry point and gameplay
+- `assets/` — Android asset directory
+- `.github/workflows/android.yml` — Android APK build and verification
+- `rust-toolchain.toml` — pinned Rust toolchain
